@@ -10,13 +10,7 @@
  */
 
 get_header(); ?>
-<!--
-<script type="text/javascript" src="<?php bloginfo("template_directory"); ?><?php echo "/js/jquery-ui-1.10.0.custom.min.js"; ?>"></script>
-<link rel="stylesheet" type="text/css" href="<?php bloginfo("template_directory"); ?><?php echo "/css/smoothness/jquery-ui-1.10.0.custom.min.css" ?>" >
--->
-
-
-    <?php
+<?php
     if(isset($_REQUEST['search'])){
 
         if( !empty($_REQUEST['zip']) ){
@@ -42,82 +36,165 @@ get_header(); ?>
         $_PARAM['sord']         = $_REQUEST['sord'];
 
         $data = search($_PARAM);
-        echo "<pre>";
+        /*echo "<pre>";
         print_r($_PARAM);
-        //print_r($data);
-        echo "</pre>";
+        print_r($data);
+        echo "</pre>";*/
 
         $data_office = $data->data;
-/*
-echo "<pre>";
-print_r($data_office);
-echo "</pre>";*/
     }
+?>
+
+<script type="text/javascript"
+  src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCJHoCLJb_K0TPxWagrigvltvi33-lhpDU&sensor=false">
+</script>
+
+<script type="text/javascript">
+        //------------------------------[1]
+            $(document).ready(function(){
+                initialize();
+                //--
+                console.log("LOAD");
+                var $id_post = "<?php echo $_REQUEST['tab'];?>";
+
+            //ocultarTodos();
+            $('.menu-horizonal li a').click(function(event){
+                event.preventDefault();
+                $link_click = $(this);
+        //-----------------------------------------------------
+                //EACH
+                $links = $('.menu-horizonal li a');
+                $.each($links, function(index, value) {
+                    var id = $(value).attr('href');
+
+                    // ROMEVER ACTIVE
+                    $(value).removeClass('active');
+                    // REMOVER VISIBLES TAB
+                    $(id).addClass('hidden');
+
+                });//endEACH
+
+        //-----------------------------------------------------
+        //-----------------------------------------------------
+                if($link_click){
+                    $link_click.removeClass('hidden')
+                                .addClass('active');
+                    //ver
+                    var id = $link_click.attr('href');
+                    $(id).removeClass('hidden');
+                    clearSearch();
+                    $("#tab").val(id);
+                }
+            });
+
+
+            });//END JQUERY READY
+
+            clearSearch = function (){
+                var form = document.myform;
+                form.zip.value ='';
+                form.city.value='';
+            }
+            // Funcion de Pagina
+            changePag = function(event,number){
+                event.preventDefault();
+                var form = document.myform;
+                form.page.value = number;
+                console.log( number );
+                form.submit();
+            }
+</script>
+
+<script type ="text/javascript">
+    function initialize(event) {
+        //obj
+        ObjMap = function(){
+            this.position="",
+            this.description="",
+            this.setPosition = function(position){
+                this.position = position;
+            },
+            this.setDescription = function(description){
+                this.description = description;
+            }
+            this.getPosition = function(){
+                return this.position;
+            },
+            this.getDescription = function(){
+                return this.description;
+            }
+        }
+
+        var arregloObj = new Array();
+
+    var latitud_base = 38.555474567327764;
+    var longitud_base= -95.66499999999996;
+    <?php
+    if(isset($data_office)):
+    foreach($data_office as $indice => $value):
+        $value->gm_lat = str_replace(' ','',$value->gm_lat);
+        $value->gm_lnt = str_replace(' ','',$value->gm_lnt);
+        if($value->gm_lnt!="" && $value->gm_lat!=""){
+    ?>
+        <?php if($indice == 0){
+            echo "latitud_base =".$value->gm_lat.";";
+            echo "\nlongitud_base=".$value->gm_lnt.";";
+         } ?>
+        var p2<?php echo $indice;?> = new ObjMap();
+        p2<?php echo $indice;?>.setPosition(new google.maps.LatLng(<?php echo $value->gm_lat.",".$value->gm_lnt;?>));
+        p2<?php echo $indice;?>.setDescription("hello word"); //new google.maps.InfoWindow({content: 'HOLA MUNDO'})
+        arregloObj.push(p2<?php echo $indice;?>);
+    <?php
+    }
+    endforeach;
+    endif;
     ?>
 
 
-
-
-
-
-<script type="text/javascript">
-    $(document).ready(function(){
-        console.log("LOAD");
-
-    //ocultarTodos();
-    $('.menu-horizonal li a').click(function(event){
-        event.preventDefault();
-        $link_click = $(this);
-//-----------------------------------------------------
-        //EACH
-        $links = $('.menu-horizonal li a');
-        $.each($links, function(index, value) {
-            // ROMEVER ACTIVE
-            $(value).removeClass('active');
-            // REMOVER VISIBLES TAB
-            var id = $(value).attr('href');
-            $(id).addClass('hidden');
-        });//endEACH
-//-----------------------------------------------------
-        if($link_click){ // OJOOOO HIDDEN
-            $link_click.removeClass('hidden')
-                        .addClass('active');
-            //ver
-            var id = $link_click.attr('href');
-            $(id).removeClass('hidden');
-            clearSearch();
+// ------------------ INICIO PINTAR MAPA
+console.log('latitud_base == ',latitud_base);
+console.log('longitud_base == '.longitud_base);
+        var mapOptions = {
+          zoom: 8,
+          center: new google.maps.LatLng(latitud_base,longitud_base),
+          //center: new google.maps.LatLng(-25.363882,131.044922),
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
         }
-    });
+        var map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
 
 
+        //marcar puntos
+        for(i=0;i<arregloObj.length;i++){
+            var obj = arregloObj[i];
+            var marker = new google.maps.Marker({
+                position: obj.getPosition(),
+                title:"Hello World!"
+            });
+            marker.setMap(map);
+            //console.log("obj.getUno",obj.getPosition());
+            //console.log("obj.getDos",obj.getDescription());
+            console.log("pintadoo",i);
+
+            //evento
+            /*google.maps.event.addListener(marker, 'click', function(){
+                infowindow.open(map,marker);
+            });*/
 
 
-    });//END JQUERY READY
+        }
 
-    clearSearch = function (){
-        var form = document.myform;
-        form.zip.value ='';
-        form.city.value='';
     }
-    // Funcion de Pagina
-    changePag = function(event,number){
-        event.preventDefault();
-        var form = document.myform;
-        form.page.value = number;
-        console.log( number );
-        form.submit();
-    }
 
-// GOOGLE MAP
 
-  function initialize(lat,lgt,direc,Phone,Atencion) {
+    //
+  function getdirection(lat,lgt,direc,Phone,Atencion) {
     var latlng = new google.maps.LatLng(lat,lgt);
     var myOptions = {
       zoom: 12,
       center: latlng,
       mapTypeId: google.maps.MapTypeId.ROADMAP
     };
-    var map = new google.maps.Map(document.getElementById("map_canvas_custom_54699"),myOptions);
+    var map = new google.maps.Map(document.getElementById("map_canvas"),myOptions);
     var contentString = direc + '<br> Phone: '+ Phone + '<br>' +Atencion
 
     var infowindow = new google.maps.InfoWindow({content: contentString});
@@ -134,162 +211,50 @@ echo "</pre>";*/
         });
   }//end initialize
 
-
-/*
-function initialize(lat,lnt,a,b,c){
-
-     var myLatlng = new google.maps.LatLng(lat,lnt);
-      var myOptions = {
-        zoom: 4,
-        center: myLatlng,
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-      }
-     var map = new google.maps.Map(document.getElementById("map_canvas_custom_54699"), myOptions);
-
-     var marker = new google.maps.Marker({
-          position: myLatlng,
-          title:"Hello Superposicion!"
-      });
-
-      // AGREGANDO el marker en el Mapa,s call setMap();
-      marker.setMap(map);
-
-}
-*/
-
-
 </script>
-
-<script type="text/javascript">
-
-(function(d,t){
-    if (document.getElementById("mggapiloader") == null){
-        var maps_api = 'http://maps.google.com/maps/api/js?sensor=false&language=en&callback=initializeMgMaps';
-        var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
-        g.src = maps_api;
-        g.id = "mggapiloader";
-        s.parentNode.insertBefore(g, s);
-    }
-}(document, 'script'));
-
-if (typeof mapObjWrapper === 'undefined'){
-    var mapObjWrapper = [];
-}
-mapObjWrapper.push({
-    "id":54699,
-    "map_lat":39.64673444507218, //36.026474
-    "map_lng":-95.734306, //-101.734306
-    "map_type":"roadmap",
-    "map_zoom":10,
-    "sv_active":null,
-    "sv_lat":null,
-    "sv_lng":null,
-    "sv_heading":null,
-    "sv_pitch":null,
-    "sv_zoom":10,
-    "cloud":null,
-    "weather_info":null,
-    "markers":[
-    <?php
-    if(isset($data_office)):
-    foreach($data_office as $indice => $value):
-        $value->gm_lat = str_replace(' ','',$value->gm_lat);
-        $value->gm_lnt = str_replace(' ','',$value->gm_lnt);
-        if($value->gm_lnt!="" && $value->gm_lat!=""){
-    ?>
-    {
-        "lat":<?php echo (empty($value->gm_lat)) ? '38.555474567327764' : $value->gm_lat;?>,
-        "lng":<?php echo (empty($value->gm_lnt)) ? '-95.66499999999996' : $value->gm_lnt;?>,
-        "icon":"http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|FE7C71|000000",
-        "content":"<p><?php echo $value->street_address_01;?><\/p>",
-        "heading":"<p style=\"margin:0;\"><?php echo $value->office;?><\/p>",
-        "is_open":true
-    },
-    <?php
-    }
-    endforeach;
-    endif;
-    ?>
-    ]
-});
-var loadMgMap = function(mapobj){
-    var map = new google.maps.Map(document.getElementById('map_canvas_custom_' + mapobj.id), {
-        zoom: mapobj.map_zoom,
-        center: new google.maps.LatLng(mapobj.map_lat,mapobj.map_lng),
-        mapTypeId: google.maps.MapTypeId = mapobj.map_type
-    });
-    if(mapobj.weather_info){
-        var weatherLayer = new google.maps.weather.WeatherLayer();
-        weatherLayer.setMap(map);
-    }
-    if(mapobj.cloud){
-        var cloudLayer = new google.maps.weather.CloudLayer();
-        cloudLayer.setMap(map);
-    }
-    if(mapobj.bicycle_layer){
-        var bikeLayer = new google.maps.BicyclingLayer();
-        bikeLayer.setMap(map);
-    }
-    if(mapobj.transit_layer){
-        var transitLayer = new google.maps.TransitLayer();
-        transitLayer.setMap(map);
-    }
-    if(mapobj.traffic_layer){
-        var trafficLayer = new google.maps.TrafficLayer();
-        trafficLayer.setMap(map);
-    }
-    if(mapobj.sv_active){
-        var pa = map.getStreetView();
-        pa.setPosition(new google.maps.LatLng(mapobj.sv_lat,mapobj.sv_lng));
-        pa.setPov({
-            heading: mapobj.sv_heading,
-            pitch: mapobj.sv_pitch,
-            zoom: mapobj.sv_zoom
-        });
-        pa.setVisible(mapobj.sv_active);
-    }
-    var infowindow = new google.maps.InfoWindow({
-        maxWidth: 250
-    }),  marker,  i,  place;
-    for (i = 0; i < mapobj.markers.length; i++) {
-        place = mapobj.markers[i];
-        marker = new google.maps.Marker({
-            position: new google.maps.LatLng(place.lat,place.lng),
-            map: map,
-            icon: place.icon,
-            shadow: new google.maps.MarkerImage( "http://chart.apis.google.com/chart?chst=d_map_pin_shadow", new google.maps.Size(40, 37), new google.maps.Point(0,0), new google.maps.Point(13, 37) )
-        });
-        marker.html = "<div style='width:100%; color: #333333; font-family: \"Helvetica Neue\",Helvetica,Arial,sans-serif; font-size: 13px; line-height: 18px;'>" + "<div style='font-weight:bold'>" + place.heading + "</div>" + "<div>" + place.content.replace(/\r\n/g,"<br>") + "</div>" + "</div>";
-        google.maps.event.addListener(marker, 'click', (function(marker, i) {
-            return function() {
-                infowindow.setContent(this.html);
-                infowindow.open(map, this);
-            }
-        })(marker, i));
-        if(place.is_open){
-            infowindow.setContent(marker.html);
-            infowindow.open(map, marker);
-        }
-    }
-    return false;
-};
-var initializeMgMaps = function(){
-    for (var i = 0; i < mapObjWrapper.length; i++) {
-        loadMgMap(mapObjWrapper[i]);
-    }
-}
-// FINAL GOOGLE MAP
-</script>
-
-
-
 
 <style type="text/css">
-.hidden{
-    boder:1px solid red !important;
-    display: none !important;
-}
+    .hidden{
+        boder:1px solid red !important;
+        display: none !important;
+    }
+
+    .paginate {
+    font-family:Arial, Helvetica, sans-serif;
+        padding: 3px;
+        margin: 3px;
+    }
+
+    .paginate a {
+        padding:2px 5px 2px 5px;
+        margin:2px;
+        border:1px solid #999;
+        text-decoration:none;
+        color: #666;
+    }
+    .paginate a:hover, .paginate a:active {
+        border: 1px solid #999;
+        color: #000;
+    }
+    .paginate span.current {
+        margin: 2px;
+        padding: 2px 5px 2px 5px;
+            border: 1px solid #999;
+
+            font-weight: bold;
+            background-color: #999;
+            color: #FFF;
+        }
+        .paginate span.disabled {
+            padding:2px 5px 2px 5px;
+            margin:2px;
+            border:1px solid #eee;
+            color:#DDD;
+        }
 </style>
+
+
+
 	<section class="main-find-offices">
         <h1 class="entry-title"><?php the_title(); ?></h1>
         <?php if ( is_search() ) :?>
@@ -300,27 +265,23 @@ var initializeMgMaps = function(){
         <section class="entry-content">
             <?php the_content( __( 'Continue reading <span class="meta-nav">&rarr;</span>', 'twentytwelve' ) ); ?>
             <article class="top">
-                <?php if(false): ?>
+
                 <div class="right">
-                    <span>Agents 1 to 8 of 31</span>
-                    <ul class="pagination">
-                        <li><a href="#?searchField="><<</a></li>
-                        <li><a href="#">1</a></li>
-                        <li><a href="#" class="active">2</a></li>
-                        <li><a href="#">3</a></li>
-                        <li><a href="#">4</a></li>
-                        <li><a href="#">5</a></li>
-                        <li><a href="#">6</a></li>
-                        <li><a href="#">>></a></li>
-                    </ul>
+                    <?php //echo $data->paginate; ?>
                 </div>
-                <?php endif;?><!-- end Pagination -->
 
-
+                <?php
+                $tab = ($_REQUEST['tab']) ? $_REQUEST['tab'] :false;
+                ?>
                 <nav>
                     <ul class="menu-horizonal select">
+                        <?php if($tab):?>
+                        <li><a href="#zipcode" class="<?php echo ($tab=="#zipcode")? 'active':'';?>" >By ZIP Code</a> </li>
+                        <li><a href="#city" class="<?php echo ($tab=="#city")? 'active':'';?>">By City</a> </li>
+                        <?php else:?>
                         <li><a href="#zipcode" class="active" >By ZIP Code</a> </li>
-                        <li><a href="#city">By City</a> </li>
+                        <li><a href="#city" class="">By City</a> </li>
+                        <?php endif;?>
                     </ul>
                 </nav>
 
@@ -330,31 +291,52 @@ var initializeMgMaps = function(){
             <article id="" class="list">
 
                 <form action="" method="post" name="myform" id="myform" class="find">
-                    <div class="">
+                    <div class="hidden">
                     page<input type="text" name="page" value="<?php echo ($_REQUEST['page']) ? $_REQUEST['page'] : '1'; ?>"/>
                     row o limit<input type="text" name="rows" value="4"/>
                     sidx<input type="text" name="sidx" value="id"/>
                     sord<input type="text" name="sord" value="asc"/>
+                    tab<input type="text" name="tab" id="tab" value="<?php echo $tab; ?>">
                     <input type="hidden" name="search" id="search" value="search"/>
                     </div>
                     <!-- <input id="zip" name="zip" placeholder="Enter a Zip code" class="field" type="text"/> -->
 
 
                     <!-- inicio tab -->
-                    <div id ="zipcode" class="active">
-                    <input name="zip" placeholder="Enter Zip Code Office" class="field" type="text"
-                    value = "<?php echo ($_REQUEST['zip']) ? $_REQUEST['zip'] : ''; ?>" />
-                    <input type="submit" name="go" class="go" id="send" value="Find"/>
-                    </div>
+                    <?php if($tab):?>
+                        <div id ="zipcode" class="<?php echo ($tab=="#zipcode")? 'active':'hidden';?>">
+                        <input name="zip" placeholder="Enter Zip Code Office" class="field" type="text"
+                        value = "<?php echo ($_REQUEST['zip']) ? $_REQUEST['zip'] : ''; ?>" />
+                        <input type="submit" name="go" class="go" id="send" value="zipcode"/>
+                        </div>
 
-                    <div id ="city" class ="hidden">
-                    <input name="city" placeholder="Enter City Office" class="field" type="text"
-                    value = "<?php echo ($_REQUEST['city']) ? $_REQUEST['city'] : ''; ?>" />
-                    <input type="submit" name="go" class="go" id="send" value="Find"/>
-                    </div>
+                        <div id ="city" class ="<?php echo ($tab=="#city")? 'active':'hidden';?>">
+                        <input name="city" placeholder="Enter City Office" class="field" type="text"
+                        value = "<?php echo ($_REQUEST['city']) ? $_REQUEST['city'] : ''; ?>" />
+                        <input type="submit" name="go" class="go" id="send" value="city"/>
+                        </div>
+                    <?php else:?>
+                        <div id ="zipcode" class="">
+                        <input name="zip" placeholder="Enter Zip Code Office" class="field" type="text"
+                        value = "<?php echo ($_REQUEST['zip']) ? $_REQUEST['zip'] : ''; ?>" />
+                        <input type="submit" name="go" class="go" id="send" value="zipcode"/>
+                        </div>
+
+                        <div id ="city" class ="hidden">
+                        <input name="city" placeholder="Enter City Office" class="field" type="text"
+                        value = "<?php echo ($_REQUEST['city']) ? $_REQUEST['city'] : ''; ?>" />
+                        <input type="submit" name="go" class="go" id="send" value="city"/>
+                        </div>
+                    <?php endif;?>
+
+
+
                 </form>
 
-                <h2><?php echo $data->records; ?> Offices near 90048</h2>
+                <h2><?php if($data->records):?>
+                        <?php echo $data->records; ?> Offices near <?php echo $data->recordsBase; ?>
+                    <?php endif;?>
+                </h2>
                 <ul>
                 <?php if(isset($data_office)): ?>
                     <?php foreach($data_office as $indice => $value): ?>
@@ -374,7 +356,7 @@ var initializeMgMaps = function(){
                             <?php
                             $zoom = $value->gm_lat.",".$value->gm_lnt.",'".$value->office."','".$value->street_address_01."',null";
                             ?>
-                            <a href="#" class="directions" onclick="initialize(<?php echo $zoom;?>)">Get directions</a>
+                            <a href="#" class="directions" onclick="getdirection(<?php echo $zoom;?>)">Get directions</a>
                         </div>
                     </li>
                     <?php endforeach; ?>
@@ -382,50 +364,39 @@ var initializeMgMaps = function(){
 
                 </ul>
             </article>
-            <!-- <div id="map_canvas_custom_54699" style="width:580px; height:785px; margin:10px;" > -->
-            <article class="map" id="map_canvas_custom_54699">
 
-                <!-- <iframe width="99%" height="99%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src="http://maps.google.es/maps?f=q&amp;source=s_q&amp;hl=es&amp;geocode=&amp;q=Los+%C3%81ngeles,+California,+Estados+Unidos&amp;aq=0&amp;oq=los+an&amp;sll=40.396764,-3.713379&amp;sspn=11.689818,26.784668&amp;ie=UTF8&amp;hq=&amp;hnear=Los+%C3%81ngeles,+Condado+de+Los+%C3%81ngeles,+California,+Estados+Unidos&amp;ll=34.052234,-118.243685&amp;spn=0.795316,1.674042&amp;t=m&amp;z=10&amp;output=embed"></iframe> -->
+
+
+
+
+
+
+            <article class="map" id="map_canvas" style="background-color:blue;">
             </article>
-            <div id="map_canvas_custom_54698"></div>
 
 
-            <?php if( ($data->total) >= 2): ?>
+
+
+
+
+
 
             <article class="top bottom">
                 <div class="right">
-                    <span>Agents 1 to 8 of 31</span>
-                    <ul class="pagination">
-                        <li><a href="#"><<</a></li>
-                        <?php
-                        $contador = 1;
-                        for($i=1; $i<=($data->total);$i++){
-                            $class = ($data->page == $i) ? 'class="active"' : '';
-                            $click = ' onclick="changePag(event,'.$i.')"';
-
-                            echo '<li><a href="#" '.$class. $click.' >'.$i.'</a></li>';
-
-                        }
-                        ?>
-                        <li><a href="#">>></a></li>
-                    </ul>
+                    <?php echo $data->paginate; ?>
                 </div>
             </article>
-        <?php endif;?><!-- end Paginacion -->
-
-
         </section><!-- .entry-content -->
         <?php endif; ?>
 	</section>
-
     </div>
-
-
 <?php get_footer(); ?>
 
 <?php
 function search($_PARAM){
     global $wpdb;
+    $tableName="wp_master_office";
+    $targetpage = "";
 
     $page = $_PARAM['page']; //1
     $limit = $_PARAM['rows'];//12
@@ -454,11 +425,13 @@ function search($_PARAM){
     }
 
     //-------------------------- query
-    $query2 = "SELECT count(*) as count FROM wp_master_office $WHERE;";
+    $query2 = "SELECT count(*) as count FROM $tableName $WHERE;";
+    $count = $wpdb->get_var($query2,0,0);
     // echo "<pre>2";
     // print_r($query2);
     // echo "</pre>";
-    $count = $wpdb->get_var($query2,0,0);
+
+    $count_base = $wpdb->get_var("SELECT count(*) as count FROM $tableName",0,0);
 
     if ($count > 0) {
         $total_pages = ceil($count / $limit);
@@ -466,6 +439,7 @@ function search($_PARAM){
         $total_pages = 0;
     }
     //valida
+    if ($page == 0){$page = 1;}
     if ($page > $total_pages)
         $page = $total_pages;
 
@@ -491,29 +465,123 @@ function search($_PARAM){
     state,
     gm_lat,
     gm_lnt
-    FROM wp_master_office $cadena;";
-    echo "<pre>";
-    print_r($query);
-    echo "</pre>";
+    FROM $tableName $cadena;";
+    // echo "<pre>";
+    // print_r($query);
+    // echo "</pre>";
     $lista = $wpdb->get_results($query);
 
-//
+// inicio script pag
+    $prev = $page - 1;
+    $next = $page + 1;
+    $lastpage = ceil($total_pages/$limit);
+    $LastPagem1 = $lastpage - 1;
+
+    $stages = 3;
+
+    // echo "<br>stages = $stages";
+    // echo "<br>lastpage = $lastpage";
+    // echo "<br>LastPagem1 = $LastPagem1";
+    // echo "<br>total_pages = $total_pages";
+    // echo "<br>page = $page";
+    // echo "<br>prev = $prev";
+    // echo "<br>next = $next";
+    // echo "<br>";
+
+
+    $paginate = '';
+    if($lastpage > 1)
+    {
+        $paginate .= "<div class='paginate'>";
+        // Previous
+        if ($page > 1){
+            $paginate.= "<a href='#' onclick='changePag(event,$prev)' >previous</a>";
+        }else{
+            $paginate.= "<span class='disabled'>previous</span>";   }
 
 
 
+        // Pages
+        if ($lastpage < 7 + ($stages * 2))  // Not enough pages to breaking it up
+        {
+            for ($counter = 1; $counter <= $lastpage; $counter++)
+            {
+                if ($counter == $page){
+                    $paginate.= "<span class='current'>$counter</span>";
+                }else{
+                    $paginate.= "<a href='#' onclick='changePag(event,$counter)'>$counter</a>";}
+            }
+        }
+        elseif($lastpage > 5 + ($stages * 2))   // Enough pages to hide a few?
+        {
+            // Beginning only hide later pages
+            if($page < 1 + ($stages * 2))
+            {
+                for ($counter = 1; $counter < 4 + ($stages * 2); $counter++)
+                {
+                    if ($counter == $page){
+                        $paginate.= "<span class='current'>$counter</span>";
+                    }else{
+                        $paginate.= "<a href='#' onclick='changePag(event,$counter)' >$counter</a>";}
+                }
+                $paginate.= "...";
+                $paginate.= "<a href='#' onclick='changePag(event,$LastPagem1)' >$LastPagem1</a>";
+                $paginate.= "<a href='#' onclick='changePag(event,$lastpage)' >$lastpage</a>";
+            }
+            // Middle hide some front and some back
+            elseif($lastpage - ($stages * 2) > $page && $page > ($stages * 2))
+            {
+                $paginate.= "<a href='#' onclick='changePag(event,1)' >1</a>";
+                $paginate.= "<a href='#' onclick='changePag(event,2)' >2</a>";
+                $paginate.= "...";
+                for ($counter = $page - $stages; $counter <= $page + $stages; $counter++)
+                {
+                    if ($counter == $page){
+                        $paginate.= "<span class='current'>$counter</span>";
+                    }else{
+                        $paginate.= "<a href='#' onclick='changePag(event,$counter)' >$counter</a>";}
+                }
+                $paginate.= "...";
+                $paginate.= "<a href='#' onclick='changePag(event,$LastPagem1)' >$LastPagem1</a>";
+                $paginate.= "<a href='#' onclick='changePag(event,$lastpage)' >$lastpage</a>";
+            }
+            // End only hide early pages
+            else
+            {
+                $paginate.= "<a href='#' onclick='changePag(event,1)' >1</a>";  /*"<a href='$targetpage?page=1'>1</a>"*/
+                $paginate.= "<a href='#' onclick='changePag(event,2)' >2</a>";
+                $paginate.= "...";
+                for ($counter = $lastpage - (2 + ($stages * 2)); $counter <= $lastpage; $counter++)
+                {
+                    if ($counter == $page){
+                        $paginate.= "<span class='current'>$counter</span>";
+                    }else{
+                        $paginate.= "<a href='#' onclick='changePag(event,$counter)' >$counter</a>";}
+                }
+            }
+        }
+
+                // Next
+        if ($page < $counter - 1){
+            $paginate.= "<a href='#' onclick='changePag(event,$next)' >next</a>";
+        }else{
+            $paginate.= "<span class='disabled'>next</span>";
+            }
+
+        $paginate.= "</div>";
 
 
+    }
 
-
-
-    $responce->page = $page;
-    $responce->total = $total_pages;
-    //$responce->start = $start;
-    $responce->records = $count;
-    $responce->data = $lista;
+// final script pag
+    $response->page = $page;
+    $response->total = $total_pages;
+    //$response->start = $start;
+    $response->records = $count;
+    $response->recordsBase = $count_base;
+    $response->data = $lista;
     //----------pagination--------------
-    $response->lastPage = '';
-    return $responce;
-
+    $response->paginate = $paginate;
+    return $response;
 }
 ?>
