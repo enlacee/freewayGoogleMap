@@ -52,6 +52,7 @@ get_header(); ?>
 <script type="text/javascript">
         //------------------------------[1]
             $(document).ready(function(){
+
                 initialize();
                 //--
                 console.log("LOAD");
@@ -103,32 +104,44 @@ get_header(); ?>
                 console.log( number );
                 form.submit();
             }
+
+
+//------------------ google map-------------------------
+
+
 </script>
 
 <script type ="text/javascript">
-    function initialize(event) {
-        //obj
-        ObjMap = function(){
-            this.position="",
-            this.description="",
-            this.setPosition = function(position){
-                this.position = position;
-            },
-            this.setDescription = function(description){
-                this.description = description;
-            }
-            this.getPosition = function(){
-                return this.position;
-            },
-            this.getDescription = function(){
-                return this.description;
-            }
-        }
+  function initialize() {
+    var init_lat = 42.6847550;
+    var init_long = -73.85430040;
+<?php
+if(isset($data_office)):
+    foreach($data_office as $indice => $value):
+        $value->gm_lat = str_replace(' ','',$value->gm_lat);
+        $value->gm_lnt = str_replace(' ','',$value->gm_lnt);
+        if($value->gm_lnt!="" && $value->gm_lat!=""):
+            if($indice==0){ echo "init_lat=$value->gm_lat; init_long=$value->gm_lnt;";}
+        endif;
+    endforeach;
+endif;
+?>
 
-        var arregloObj = new Array();
 
-    var latitud_base = 38.555474567327764;
-    var longitud_base= -95.66499999999996;
+
+    var latTotal = new google.maps.LatLng(init_lat, init_long);
+    var myOptions = {
+        zoom : 7,
+        center: latTotal,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+
+    var map = new google.maps.Map(document.getElementById("map_canvas"),myOptions);
+    var infowindow = new google.maps.InfoWindow({
+        content: ''
+    });
+
+    var marcadores = [
     <?php
     if(isset($data_office)):
     foreach($data_office as $indice => $value):
@@ -136,56 +149,69 @@ get_header(); ?>
         $value->gm_lnt = str_replace(' ','',$value->gm_lnt);
         if($value->gm_lnt!="" && $value->gm_lat!=""){
     ?>
-        <?php if($indice == 0){
-            echo "latitud_base =".$value->gm_lat.";";
-            echo "\nlongitud_base=".$value->gm_lnt.";";
-         } ?>
-        var p2<?php echo $indice;?> = new ObjMap();
-        p2<?php echo $indice;?>.setPosition(new google.maps.LatLng(<?php echo $value->gm_lat.",".$value->gm_lnt;?>));
-        p2<?php echo $indice;?>.setDescription("hello word"); //new google.maps.InfoWindow({content: 'HOLA MUNDO'})
-        arregloObj.push(p2<?php echo $indice;?>);
+        {
+            positionMarcadores:{
+                lat : <?php echo $value->gm_lat; ?>,
+                lng : <?php echo $value->gm_lnt; ?>
+            },
+            contenido: "<?php echo $value->office;?>"
+        },
+
     <?php
     }
     endforeach;
     endif;
     ?>
-
-
-// ------------------ INICIO PINTAR MAPA
-console.log('latitud_base == ',latitud_base);
-console.log('longitud_base == '.longitud_base);
-        var mapOptions = {
-          zoom: 8,
-          center: new google.maps.LatLng(latitud_base,longitud_base),
-          //center: new google.maps.LatLng(-25.363882,131.044922),
-          mapTypeId: google.maps.MapTypeId.ROADMAP,
-        }
-        var map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
-
-
-        //marcar puntos
-        for(i=0;i<arregloObj.length;i++){
-            var obj = arregloObj[i];
-            var marker = new google.maps.Marker({
-                position: obj.getPosition(),
-                title:"Hello World!"
+    ];
+    for (var i = 0, j = marcadores.length; i < j; i++) {
+        var description = marcadores[i].contenido;
+        var marker = new google.maps.Marker({
+            position: new google.maps.LatLng(marcadores[i].positionMarcadores.lat, marcadores[i].positionMarcadores.lng),
+            map: map
+        });
+        (function(marker, description){
+                google.maps.event.addListener(marker, 'click', function() {
+                infowindow.setContent(description);
+                infowindow.open(map, marker);
             });
-            marker.setMap(map);
-            //console.log("obj.getUno",obj.getPosition());
-            //console.log("obj.getDos",obj.getDescription());
-            console.log("pintadoo",i);
-
-            //evento
-            /*google.maps.event.addListener(marker, 'click', function(){
-                infowindow.open(map,marker);
-            });*/
-
-
-        }
-
+        })(marker,description);
     }
 
+  }
 
+  function zom(lat,lgt,description){
+    var latlng = new google.maps.LatLng(lat,lgt);
+    var myOptions = {
+      zoom: 7,
+      center: latlng,
+      mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+
+    var map = new google.maps.Map(document.getElementById("map_canvas"),myOptions);
+    var infowindow = new google.maps.InfoWindow({
+            content: description
+    });
+    marker = new google.maps.Marker({
+          map:map,
+          draggable:true,
+          animation: google.maps.Animation.DROP,
+          position: latlng
+    });
+    google.maps.event.addListener(marker, 'click', function(){
+        infowindow.open(map,marker);
+    });
+  }
+
+
+
+
+
+
+
+
+
+
+//--------
     //
   function getdirection(lat,lgt,direc,Phone,Atencion) {
     var latlng = new google.maps.LatLng(lat,lgt);
@@ -210,6 +236,18 @@ console.log('longitud_base == '.longitud_base);
       infowindow.open(map,marker);
         });
   }//end initialize
+
+
+
+function solonumeros()
+{
+var tecla = window.event.keyCode;
+if (tecla < 48 || tecla > 57)
+{
+window.event.keyCode=0;
+}
+}
+
 
 </script>
 
@@ -305,8 +343,8 @@ console.log('longitud_base == '.longitud_base);
                     <!-- inicio tab -->
                     <?php if($tab):?>
                         <div id ="zipcode" class="<?php echo ($tab=="#zipcode")? 'active':'hidden';?>">
-                        <input name="zip" placeholder="Enter Zip Code Office" class="field" type="text"
-                        value = "<?php echo ($_REQUEST['zip']) ? $_REQUEST['zip'] : ''; ?>" />
+                        <input name="zip" type="text" class="field" placeholder="Enter Zip Code Office"  onkeypress="return solonumeros(event)"
+                        value = "<?php echo ($_REQUEST['zip']) ? $_REQUEST['zip'] : ''; ?>" maxlength="5" />
                         <input type="submit" name="go" class="go" id="send" value="zipcode"/>
                         </div>
 
@@ -317,8 +355,8 @@ console.log('longitud_base == '.longitud_base);
                         </div>
                     <?php else:?>
                         <div id ="zipcode" class="">
-                        <input name="zip" placeholder="Enter Zip Code Office" class="field" type="text"
-                        value = "<?php echo ($_REQUEST['zip']) ? $_REQUEST['zip'] : ''; ?>" />
+                        <input name="zip" type="text" class="field" placeholder="Enter Zip Code Office"
+                        value = "<?php echo ($_REQUEST['zip']) ? $_REQUEST['zip'] : ''; ?>" maxlength="5" />
                         <input type="submit" name="go" class="go" id="send" value="zipcode"/>
                         </div>
 
