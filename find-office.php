@@ -45,18 +45,27 @@ get_header(); ?>
     }
 ?>
 
-<script type="text/javascript"
-  src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCJHoCLJb_K0TPxWagrigvltvi33-lhpDU&sensor=false">
-</script>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
 
 <script type="text/javascript">
+ //         Funciones de Ayuda
+
+function IsNumber(event){
+    //var nav4 = window.Event ? true : false;
+    // Backspace = 8, Enter = 13, ’0′ = 48, ’9′ = 57, ‘.’ = 46
+    //var key = nav4 ? event.which : event.keyCode;
+    var key = event.which || event.keyCode;
+    //alert(nav4);
+    //alert(key);
+    return (key <= 13 || (key >= 48 && key <= 57) || key == 46);
+}
+
+
         //------------------------------[1]
             $(document).ready(function(){
-
                 initialize();
                 //--
-                console.log("LOAD");
-                var $id_post = "<?php echo $_REQUEST['tab'];?>";
+                var $id_post ="<?php echo $_REQUEST['tab'];?>";
 
             //ocultarTodos();
             $('.menu-horizonal li a').click(function(event){
@@ -66,13 +75,11 @@ get_header(); ?>
                 //EACH
                 $links = $('.menu-horizonal li a');
                 $.each($links, function(index, value) {
-                    var id = $(value).attr('href');
-
+                    var id = $(value).attr('data');
                     // ROMEVER ACTIVE
                     $(value).removeClass('active');
                     // REMOVER VISIBLES TAB
                     $(id).addClass('hidden');
-
                 });//endEACH
 
         //-----------------------------------------------------
@@ -81,7 +88,7 @@ get_header(); ?>
                     $link_click.removeClass('hidden')
                                 .addClass('active');
                     //ver
-                    var id = $link_click.attr('href');
+                    var id = $link_click.attr('data');
                     $(id).removeClass('hidden');
                     clearSearch();
                     $("#tab").val(id);
@@ -101,11 +108,8 @@ get_header(); ?>
                 event.preventDefault();
                 var form = document.myform;
                 form.page.value = number;
-                console.log( number );
                 form.submit();
             }
-
-
 //------------------ google map-------------------------
 
 
@@ -131,7 +135,7 @@ endif;
 
     var latTotal = new google.maps.LatLng(init_lat, init_long);
     var myOptions = {
-        zoom : 7,
+        zoom : 9,
         center: latTotal,
         mapTypeId: google.maps.MapTypeId.ROADMAP
     };
@@ -179,39 +183,7 @@ endif;
 
   }
 
-  function zom(lat,lgt,description){
-    var latlng = new google.maps.LatLng(lat,lgt);
-    var myOptions = {
-      zoom: 7,
-      center: latlng,
-      mapTypeId: google.maps.MapTypeId.ROADMAP
-    };
-
-    var map = new google.maps.Map(document.getElementById("map_canvas"),myOptions);
-    var infowindow = new google.maps.InfoWindow({
-            content: description
-    });
-    marker = new google.maps.Marker({
-          map:map,
-          draggable:true,
-          animation: google.maps.Animation.DROP,
-          position: latlng
-    });
-    google.maps.event.addListener(marker, 'click', function(){
-        infowindow.open(map,marker);
-    });
-  }
-
-
-
-
-
-
-
-
-
-
-//--------
+//-------
     //
   function getdirection(lat,lgt,direc,Phone,Atencion) {
     var latlng = new google.maps.LatLng(lat,lgt);
@@ -236,18 +208,6 @@ endif;
       infowindow.open(map,marker);
         });
   }//end initialize
-
-
-
-function solonumeros()
-{
-var tecla = window.event.keyCode;
-if (tecla < 48 || tecla > 57)
-{
-window.event.keyCode=0;
-}
-}
-
 
 </script>
 
@@ -314,11 +274,11 @@ window.event.keyCode=0;
                 <nav>
                     <ul class="menu-horizonal select">
                         <?php if($tab):?>
-                        <li><a href="#zipcode" class="<?php echo ($tab=="#zipcode")? 'active':'';?>" >By ZIP Code</a> </li>
-                        <li><a href="#city" class="<?php echo ($tab=="#city")? 'active':'';?>">By City</a> </li>
+                        <li><a data="#zipcode" class="<?php echo ($tab=="#zipcode")? 'active':'';?>" >By ZIP Code</a> </li>
+                        <li><a data="#city" class="<?php echo ($tab=="#city")? 'active':'';?>">By City</a> </li>
                         <?php else:?>
-                        <li><a href="#zipcode" class="active" >By ZIP Code</a> </li>
-                        <li><a href="#city" class="">By City</a> </li>
+                        <li><a data="#zipcode" class="active" >By ZIP Code</a> </li>
+                        <li><a data="#city" >By City</a> </li>
                         <?php endif;?>
                     </ul>
                 </nav>
@@ -343,7 +303,7 @@ window.event.keyCode=0;
                     <!-- inicio tab -->
                     <?php if($tab):?>
                         <div id ="zipcode" class="<?php echo ($tab=="#zipcode")? 'active':'hidden';?>">
-                        <input name="zip" type="text" class="field" placeholder="Enter Zip Code Office"  onkeypress="return solonumeros(event)"
+                        <input name="zip" type="text" class="field" placeholder="Enter Zip Code Office"  onkeypress="return IsNumber(event)"
                         value = "<?php echo ($_REQUEST['zip']) ? $_REQUEST['zip'] : ''; ?>" maxlength="5" />
                         <input type="submit" name="go" class="go" id="send" value="zipcode"/>
                         </div>
@@ -355,7 +315,7 @@ window.event.keyCode=0;
                         </div>
                     <?php else:?>
                         <div id ="zipcode" class="">
-                        <input name="zip" type="text" class="field" placeholder="Enter Zip Code Office"
+                        <input name="zip" type="text" class="field" placeholder="Enter Zip Code Office" onkeypress="return IsNumber(event)"
                         value = "<?php echo ($_REQUEST['zip']) ? $_REQUEST['zip'] : ''; ?>" maxlength="5" />
                         <input type="submit" name="go" class="go" id="send" value="zipcode"/>
                         </div>
